@@ -1,0 +1,34 @@
+{
+  "name": "redux-saga-fetch",
+  "version": "0.0.1",
+  "description": "A helper for fetching states from remote APIs that wraps redux-saga",
+  "main": "lib/index.js",
+  "repository": "https://github.com/ory/redux-saga-fetch.git",
+  "author": "aeneasr <aeneas.rekkas@serlo.org>",
+  "license": "MIT",
+  "private": false,
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-plugin-transform-class-properties": "^6.24.1",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-flow": "^6.23.0",
+    "flow-bin": "^0.57.2",
+    "flow-typed": "^2.2.0",
+    "jest": "^21.2.1",
+    "prettier": "^1.7.4"
+  },
+  "scripts": {
+    "build": "babel src/ --out-dir lib/",
+    "watch": "babel -w src/ --out-dir lib/",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "flow:generate": "flow-typed install",
+    "format": "prettier --trailing-comma es5 --no-semi --single-quote --write 'src/**/*.js'"
+  },
+  "dependencies": {
+    "redux": "^3.7.2",
+    "redux-actions": "^2.2.1",
+    "redux-saga": "^0.16.0"
+  }
+}
