@@ -20,8 +20,8 @@
     "prettier": "^1.7.4"
   },
   "scripts": {
-    "build": "babel src/ --out-dir lib/",
-    "watch": "babel -w src/ --out-dir lib/",
+    "build": "babel src/ --out-dir lib/ --ignore *.test.js",
+    "watch": "babel -w src/ --out-dir lib/ --ignore *.test.js",
     "test": "jest",
     "test:coveralls": "jest --coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test:watch": "jest --watch",
