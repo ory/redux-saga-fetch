@@ -12,6 +12,8 @@ import createSagaMiddleware from 'redux-saga'
 
 const internalServerError = new Error('Internal server error')
 
+const delay = (time) => new Promise((resolve) => setTimeout(resolve, time));
+
 describe('createRegistry', () => {
   it('should throw an error when an invalid registry is given', () => {
     expect(() =>
@@ -32,9 +34,9 @@ describe('createRegistry', () => {
 
 describe('The public api of redux-saga-fetch', () => {
   const registry = createSagaFetcher({
-    serverError: { fetcher: id => new Promise((resolve, reject) => setTimeout(() => reject(internalServerError), 100)) },
-    success: { fetcher: id => new Promise((resolve) => setTimeout(() => resolve({ foo: 'bar', id }), 100)) },
-    successWithoutContent: { fetcher: () => new Promise((resolve) => setTimeout(() => resolve(), 100)) },
+    serverError: { fetcher: id => delay(100).then(() => Promise.reject(internalServerError)) },
+    success: { fetcher: id => delay(100).then(() => Promise.resolve({ foo: 'bar', id })) },
+    successWithoutContent: { fetcher: () => delay(100) },
   })
 
   const rootReducer = combineReducers(registry.wrapRootReducer({}))
@@ -71,32 +73,16 @@ describe('The public api of redux-saga-fetch', () => {
       store.dispatch(testCase.action)
 
       it('should show that the status is fetching', async () => {
-        await new Promise((resolve, reject) => {
-          setTimeout(() => {
-            try {
-              expect(isFetching(testCase.key)(store.getState())).toBeTruthy()
-            } catch (e) {
-              reject(e)
-            }
-            resolve()
-          }, 10)
-        })
+        await delay(10)
+        expect(isFetching(testCase.key)(store.getState())).toBeTruthy()
       })
 
       it('should show that the status is done', async () => {
-        await new Promise((resolve, reject) => {
-          setTimeout(() => {
-            try {
-              expect(isFetching(testCase.key)(store.getState())).toBeFalsy()
-              expect(isFetchFailure(testCase.key)(store.getState())).toEqual(testCase.expectedError)
-              expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(!testCase.expectedError)
-              expect(selectPayload(testCase.key)(store.getState())).toEqual(testCase.expectedPayload)
-            } catch (e) {
-              reject(e)
-            }
-            resolve()
-          }, 105)
-        })
+        await delay(105)
+        expect(isFetching(testCase.key)(store.getState())).toBeFalsy()
+        expect(isFetchFailure(testCase.key)(store.getState())).toEqual(testCase.expectedError)
+        expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(!testCase.expectedError)
+        expect(selectPayload(testCase.key)(store.getState())).toEqual(testCase.expectedPayload)
       })
     })
   })
