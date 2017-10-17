@@ -34,9 +34,9 @@ describe('createRegistry', () => {
 
 describe('The public api of redux-saga-fetch', () => {
   const registry = createSagaFetcher({
-    serverError: { fetcher: id => delay(100).then(() => Promise.reject(internalServerError)) },
-    success: { fetcher: id => delay(100).then(() => Promise.resolve({ foo: 'bar', id })) },
-    successWithoutContent: { fetcher: () => delay(100) },
+    serverError: { fetcher: id => delay(50).then(() => Promise.reject(internalServerError)) },
+    success: { fetcher: id => delay(50).then(() => Promise.resolve({ foo: 'bar', id })) },
+    successWithoutContent: { fetcher: () => delay(50) },
   })
 
   const rootReducer = combineReducers(registry.wrapRootReducer({}))
@@ -74,17 +74,19 @@ describe('The public api of redux-saga-fetch', () => {
 
   testCases.forEach((testCase, testIndex) => {
     describe(`performing test case ${testIndex}`, () => {
-      store.dispatch(
-        createRequestAction(testCase.key)(testCase.actionPayload)
-      )
+      beforeAll(() => {
+        store.dispatch(
+          createRequestAction(testCase.key)(testCase.actionPayload)
+        )
+      })
 
       it('should show that the status is fetching', async () => {
-        await delay(10)
+        await delay(1)
         expect(isFetching(testCase.key)(store.getState())).toBeTruthy()
       })
 
       it('should show that the status is done', async () => {
-        await delay(105)
+        await delay(55)
         expect(isFetching(testCase.key)(store.getState())).toBeFalsy()
         expect(isFetchFailure(testCase.key)(store.getState())).toEqual(testCase.expectedError)
         expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(!testCase.expectedError)
