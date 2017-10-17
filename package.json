@@ -13,6 +13,7 @@
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-preset-env": "^1.6.0",
     "babel-preset-flow": "^6.23.0",
+    "coveralls": "^3.0.0",
     "flow-bin": "^0.57.2",
     "flow-typed": "^2.2.0",
     "jest": "^21.2.1",
@@ -22,6 +23,7 @@
     "build": "babel src/ --out-dir lib/",
     "watch": "babel -w src/ --out-dir lib/",
     "test": "jest",
+    "test:coveralls": "jest --coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test:watch": "jest --watch",
     "flow:generate": "flow-typed install",
     "format": "prettier --trailing-comma es5 --no-semi --single-quote --write 'src/**/*.js'"
