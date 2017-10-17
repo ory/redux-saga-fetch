@@ -19,10 +19,12 @@ type State = {
   }
 }
 
-export const isFetching = (key: string) => (state: State) => state.reduxSagaFetch[key].status === STATE_FETCHING
-export const isFetchFailure = (key: string) => (state: State) => state.reduxSagaFetch[key].status === STATE_FAILURE
-export const isFetchSuccess = (key: string) => (state: State) => state.reduxSagaFetch[key].status === STATE_SUCCESS
-export const selectPayload = (key: string) => (state: State) => state.reduxSagaFetch[key].payload
+const pathOr = (p, o, d) => p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : d, o)
+
+export const isFetching = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FETCHING
+export const isFetchFailure = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FAILURE
+export const isFetchSuccess = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_SUCCESS
+export const selectPayload = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'payload'], state, undefined)
 
 const createDefaultWorker = (fetcher, successAction, failureAction) => function* (action) {
   try {
