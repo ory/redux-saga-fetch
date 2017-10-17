@@ -14,7 +14,7 @@ script:
   - yarn run test:coveralls
   - yarn run build
 
-before_deply:
+before_deploy:
   - npm version -f --no-git-tag-version $(git describe --tag);
 
 deploy:
