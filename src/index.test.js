@@ -1,6 +1,6 @@
 import {
   createRequestAction,
-  createRequestFailureAction,
+  createRequestFailureAction, createRequestSuccessAction,
   createSagaFetcher,
   isFetchFailure,
   isFetching,
@@ -54,23 +54,29 @@ describe('The public api of redux-saga-fetch', () => {
   const testCases = [
     {
       key: 'serverError',
-      action: createRequestAction('serverError')('foo'),
-      expectedAction: createRequestFailureAction('serverError').toString(),
+      actionPayload: undefined,
       expectedPayload: internalServerError,
       expectedError: true
     },
     {
       key: 'success',
-      action: createRequestAction('success')('foo'),
-      expectedAction: createRequestFailureAction('success').toString(),
+      actionPayload: 'foo',
       expectedPayload: { foo: 'bar', id: 'foo' },
+      expectedError: false
+    },
+    {
+      key: 'successWithoutContent',
+      actionPayload: undefined,
+      expectedPayload: undefined,
       expectedError: false
     },
   ]
 
   testCases.forEach((testCase, testIndex) => {
     describe(`performing test case ${testIndex}`, () => {
-      store.dispatch(testCase.action)
+      store.dispatch(
+        createRequestAction(testCase.key)(testCase.actionPayload)
+      )
 
       it('should show that the status is fetching', async () => {
         await delay(10)
