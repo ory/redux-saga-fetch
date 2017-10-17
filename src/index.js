@@ -19,7 +19,7 @@ type State = {
   }
 }
 
-const pathOr = (p, o, d) => p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : d, o)
+const pathOr = (p: any[], o: any, d: any) => p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : d, o)
 
 export const isFetching = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FETCHING
 export const isFetchFailure = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FAILURE
