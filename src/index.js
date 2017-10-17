@@ -144,7 +144,7 @@ export const createRequestAction = (key: string) =>
  * @private
  * @param key
  */
-export const createRequestSuccessAction = (key: string) =>
+const createRequestSuccessAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_SUCCESS`)
 
 /**
@@ -154,5 +154,5 @@ export const createRequestSuccessAction = (key: string) =>
  * @private
  * @param key
  */
-export const createRequestFailureAction = (key: string) =>
+const createRequestFailureAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_FAILURE`)
