@@ -14,6 +14,9 @@ script:
   - yarn run test:coveralls
   - yarn run build
 
+before_deply:
+  - npm version -f --no-git-tag-version $(git describe --tag);
+
 deploy:
   - provider: npm
     api_key: "$NPM_TOKEN"
