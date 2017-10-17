@@ -3,8 +3,14 @@
 [![Build Status](https://travis-ci.org/ory/redux-saga-fetch.svg?branch=master)](https://travis-ci.org/ory/redux-saga-fetch)
 [![Coverage Status](https://coveralls.io/repos/github/ory/redux-saga-fetch/badge.svg?branch=master)](https://coveralls.io/github/ory/redux-saga-fetch?branch=master)
 
-`redux-saga-fetch` is a simple wrapper that reduces boilerplate code when using `redux-saga` in combination with
+`ory-redux-saga-fetch` is a simple wrapper that reduces boilerplate code when using `redux-saga` in combination with
 async backend calls.
+
+## Installation
+
+```
+npm i --save ory-redux-saga-fetch
+```
 
 ## API
 
@@ -19,7 +25,7 @@ import {
   isFetching,
   isFetchSuccess,
   selectPayload
-} from 'redux-saga-fetch'
+} from 'ory-redux-saga-fetch'
 
 // Some exemplary functions that call a backend and return a promise.
 // For more information on the fetch API, go here: https://github.com/bitinn/node-fetch
@@ -90,7 +96,7 @@ import {
   isFetching,
   isFetchSuccess,
   selectPayload
-} from 'redux-saga-fetch'
+} from 'ory-redux-saga-fetch'
 
 const Component = ({ getUsers, users, isFetchingUsers }) => (
   <div>
