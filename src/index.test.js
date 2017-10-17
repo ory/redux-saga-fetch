@@ -1,12 +1,12 @@
 import {
   createRequestAction,
-  createRequestFailureAction, createRequestSuccessAction,
   createSagaFetcher,
   isFetchFailure,
   isFetching,
   isFetchSuccess,
   selectPayload,
 } from './index'
+
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 import createSagaMiddleware from 'redux-saga'
 
@@ -35,7 +35,7 @@ describe('createRegistry', () => {
 describe('The public api of redux-saga-fetch', () => {
   const registry = createSagaFetcher({
     serverError: { fetcher: id => delay(50).then(() => Promise.reject(internalServerError)) },
-    success: { fetcher: id => delay(50).then(() => Promise.resolve({ foo: 'bar', id })) },
+    success: { fetcher: id => delay(50).then(() => ({ foo: 'bar', id })) },
     successWithoutContent: { fetcher: () => delay(50) },
   })
 
@@ -82,15 +82,15 @@ describe('The public api of redux-saga-fetch', () => {
 
       it('should show that the status is fetching', async () => {
         await delay(1)
-        expect(isFetching(testCase.key)(store.getState())).toBeTruthy()
+        expect(isFetching(store.getState())(testCase.key)).toBeTruthy()
       })
 
       it('should show that the status is done', async () => {
         await delay(55)
-        expect(isFetching(testCase.key)(store.getState())).toBeFalsy()
-        expect(isFetchFailure(testCase.key)(store.getState())).toEqual(testCase.expectedError)
-        expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(!testCase.expectedError)
-        expect(selectPayload(testCase.key)(store.getState())).toEqual(testCase.expectedPayload)
+        expect(isFetching(store.getState())(testCase.key)).toBeFalsy()
+        expect(isFetchFailure(store.getState())(testCase.key)).toEqual(testCase.expectedError)
+        expect(isFetchSuccess(store.getState())(testCase.key)).toEqual(!testCase.expectedError)
+        expect(selectPayload(store.getState())(testCase.key)).toEqual(testCase.expectedPayload)
       })
     })
   })
