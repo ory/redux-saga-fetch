@@ -24,9 +24,9 @@ export const isFetchFailure = (key: string) => (state: State) => state.reduxSaga
 export const isFetchSuccess = (key: string) => (state: State) => state.reduxSagaFetch[key].status === STATE_SUCCESS
 export const selectPayload = (key: string) => (state: State) => state.reduxSagaFetch[key].payload
 
-const createDefaultWorker = (fetcher, successAction, failureAction) => function* () {
+const createDefaultWorker = (fetcher, successAction, failureAction) => function* (action) {
   try {
-    const result = yield call(fetcher)
+    const result = yield call(fetcher, action.payload)
     yield put(successAction(result))
   } catch (error) {
     yield put(failureAction(error))
