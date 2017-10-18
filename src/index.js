@@ -50,7 +50,10 @@ const createWatcher = (action, worker, takeStrategy) =>
     yield takeStrategy(action, worker)
   }
 
-const createWatchers = (registry: Registry) =>
+const createWatchers = (
+  registry: Registry,
+  createWorker = createDefaultWorker
+) =>
   Object.keys(registry).map(key => {
     const { fetcher, takeStrategy } = registry[key]
     const action = createRequestAction(key)
@@ -69,6 +72,7 @@ const STATE_FAILURE = 'FAILURE'
 
 class SagaFetcher {
   registry: Registry = {}
+  createWorker = createDefaultWorker
 
   constructor(
     config: {
@@ -76,7 +80,8 @@ class SagaFetcher {
         fetcher: () => Promise<*>,
         takeStrategy: any,
       },
-    } = {}
+    } = {},
+    createWorker = createDefaultWorker
   ) {
     if (typeof config !== 'object') {
       throw new Error(`Registry must be an object but got ${typeof config}`)
@@ -86,6 +91,8 @@ class SagaFetcher {
       const options = config[key]
       this.add(key, options.fetcher, options.takeStrategy)
     })
+
+    this.createWorker = createWorker
   }
 
   add = (
@@ -144,9 +151,9 @@ class SagaFetcher {
   }
 
   createRootSaga = () => {
-    const { registry } = this
+    const { registry, createWorker } = this
     return function* rootSaga(): Generator<*, *, *> {
-      yield all(createWatchers(registry))
+      yield all(createWatchers(registry, createWorker))
     }
   }
 }
@@ -173,21 +180,18 @@ export const createRequestAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_REQUEST`)
 
 /**
- * Creates an action that is dispatched once a request action succeeds. This is an internal method and not part
- * of the public api.
+ * Creates an action that is dispatched once a request action succeeds.
  *
  * @private
  * @param key
  */
-const createRequestSuccessAction = (key: string) =>
+export const createRequestSuccessAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_SUCCESS`)
 
 /**
- * Creates an action that is dispatched once a request action fails. This is an internal method and not part
- * of the public api.
+ * Creates an action that is dispatched once a request action fails.
  *
- * @private
  * @param key
  */
-const createRequestFailureAction = (key: string) =>
+export const createRequestFailureAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_FAILURE`)
