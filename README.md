@@ -37,15 +37,15 @@ const createArticleAtAPI = (article) => fetch('http://myapi.com/articles', { met
 const sagaFetcher = createSagaFetcher({
   users: {
     // Fetch is executed when the according action is triggered. Fetch expects a function that returns a Promise.
-    fetch: getUsersFromAPI
+    fetcher: getUsersFromAPI
   },
   article: {
     // The action payload (see below) will be passed as the first argument.
-    fetch: (id) => getUsersFromAPI(id)
+    fetcher: (id) => getUsersFromAPI(id)
   },
   createArticle: {
     // This works with POST/PUT/DELETE/... methods as well
-    fetch: (payload) => createArticleAtAPI(payload)
+    fetcher: (payload) => createArticleAtAPI(payload)
   }
 })
 
