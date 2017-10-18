@@ -2,54 +2,64 @@
 // createRegistry, createRequestAction, createRequestFailureAction, createRequestSuccessAction, createRootReducer, createRootSaga
 import { createAction, handleActions } from 'redux-actions'
 import { all, call, put, takeLatest } from 'redux-saga/effects'
+import 'babel-core/register'
+import 'babel-polyfill'
 
 type Registry = {
   [key: string]: {
     fetcher: () => Promise<*>,
-    takeStrategy: Function
-  }
+    takeStrategy: Function,
+  },
 }
 
 type State = {
   reduxSagaFetch: {
     [key: string]: {
       status: string,
-      payload: mixed
+      payload: mixed,
+    },
+  },
+}
+
+const pathOr = (p: any[], o: any, d: any) =>
+  p.reduce((xs, x) => (xs && xs[x] ? xs[x] : d), o)
+
+export const isFetching = (state: State) => (key: string) =>
+  pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FETCHING
+export const isFetchFailure = (state: State) => (key: string) =>
+  pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FAILURE
+export const isFetchSuccess = (state: State) => (key: string) =>
+  pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_SUCCESS
+export const selectPayload = (state: State) => (key: string) =>
+  pathOr(['reduxSagaFetch', key, 'payload'], state, undefined)
+
+const createDefaultWorker = (fetcher, successAction, failureAction) =>
+  function*(action) {
+    try {
+      const result = yield call(fetcher, action.payload)
+      yield put(successAction(result))
+    } catch (error) {
+      yield put(failureAction(error))
     }
   }
-}
 
-const pathOr = (p: any[], o: any, d: any) => p.reduce((xs, x) => (xs && xs[x]) ? xs[x] : d, o)
-
-export const isFetching = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FETCHING
-export const isFetchFailure = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FAILURE
-export const isFetchSuccess = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_SUCCESS
-export const selectPayload = (state: State) => (key: string) => pathOr(['reduxSagaFetch', key, 'payload'], state, undefined)
-
-const createDefaultWorker = (fetcher, successAction, failureAction) => function* (action) {
-  try {
-    const result = yield call(fetcher, action.payload)
-    yield put(successAction(result))
-  } catch (error) {
-    yield put(failureAction(error))
+const createWatcher = (action, worker, takeStrategy) =>
+  function*() {
+    yield takeStrategy(action, worker)
   }
-}
 
-const createWatcher = (action, worker, takeStrategy) => function* () {
-  yield takeStrategy(action, worker)
-}
+const createWatchers = (registry: Registry) =>
+  Object.keys(registry).map(key => {
+    const { fetcher, takeStrategy } = registry[key]
+    const action = createRequestAction(key)
+    const worker = createDefaultWorker(
+      fetcher,
+      createRequestSuccessAction(key),
+      createRequestFailureAction(key)
+    )
 
-const createWatchers = (registry: Registry) => Object.keys(registry).map((key) => {
-  const { fetcher, takeStrategy } = registry[key]
-  const action = createRequestAction(key)
-  const worker = createDefaultWorker(
-    fetcher,
-    createRequestSuccessAction(key),
-    createRequestFailureAction(key),
-  )
-
-  return createWatcher(action, worker, takeStrategy)()
-})
+    return createWatcher(action, worker, takeStrategy)()
+  })
 
 const STATE_FETCHING = 'FETCHING'
 const STATE_SUCCESS = 'SUCCESS'
@@ -58,12 +68,14 @@ const STATE_FAILURE = 'FAILURE'
 class SagaFetcher {
   registry: Registry = {}
 
-  constructor(config: {
-    [key: string]: {
-      fetcher: () => Promise<*>,
-      takeStrategy: any
-    }
-  } = {}) {
+  constructor(
+    config: {
+      [key: string]: {
+        fetcher: () => Promise<*>,
+        takeStrategy: any,
+      },
+    } = {}
+  ) {
     if (typeof config !== 'object') {
       throw new Error(`Registry must be an object but got ${typeof config}`)
     }
@@ -74,38 +86,51 @@ class SagaFetcher {
     })
   }
 
-  add = (key: string, fetcher: (arg: any) => Promise<*>, takeStrategy: Function = takeLatest) => {
+  add = (
+    key: string,
+    fetcher: (arg: any) => Promise<*>,
+    takeStrategy: Function = takeLatest
+  ) => {
     if (typeof fetcher !== 'function') {
-      throw new Error(`Expected a function for key ${key} but got ${typeof fetcher}`)
+      throw new Error(
+        `Expected a function for key ${key} but got ${typeof fetcher}`
+      )
     }
 
     this.registry[key] = {
-      fetcher, takeStrategy: takeStrategy
+      fetcher,
+      takeStrategy: takeStrategy,
     }
   }
 
   wrapRootReducer = (reducers: any = {}) => {
     const handlers = {}
 
-    Object.keys(this.registry).forEach((key) => {
+    Object.keys(this.registry).forEach(key => {
       handlers[createRequestAction(key).toString()] = (state, action) => ({
         ...state,
-        [key]: { status: STATE_FETCHING }
+        [key]: { status: STATE_FETCHING },
       })
-      handlers[createRequestSuccessAction(key).toString()] = (state, { payload }) => ({
+      handlers[createRequestSuccessAction(key).toString()] = (
+        state,
+        { payload }
+      ) => ({
         ...state,
-        [key]: { status: STATE_SUCCESS, payload }
+        [key]: { status: STATE_SUCCESS, payload },
       })
-      handlers[createRequestFailureAction(key).toString()] = (state, { payload }) => ({
+      handlers[createRequestFailureAction(key).toString()] = (
+        state,
+        { payload }
+      ) => ({
         ...state,
-        [key]: { status: STATE_FAILURE, payload }
+        [key]: { status: STATE_FAILURE, payload },
       })
     })
 
-    return ({
+    return {
       ...reducers,
-      reduxSagaFetch: handleActions(handlers, {})
-    })
+      reduxSagaFetch: handleActions(handlers, {}),
+    }
   }
 
   createRootSaga = () => {
