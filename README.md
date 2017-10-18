@@ -24,7 +24,8 @@ import {
   isFetchFailure,
   isFetching,
   isFetchSuccess,
-  selectPayload
+  selectPayload,
+  selectErrorPayload
 } from 'ory-redux-saga-fetch'
 
 // Some exemplary functions that call a backend and return a promise.
@@ -80,8 +81,12 @@ isFetching('users')(store.getState()) // if true, the API call has not finished 
 isFetchSuccess('users')(store.getState()) // if true, the API call resultet in Promise.resolve()
 isFetchError('users')(store.getState()) // if true, the API call resultet in Promise.reject()
 
-// Let's assume the API call has finished and we want to see the result. This works for both cases (error and success).
+// Let's assume the API call has finished with an ok status code, and we want to see the result.
 const users = selectPayload('users')(store.getState())
+
+// Let's assume the API call has finished with an error (e.g. network or status code != 2xx), use this method to retrieve
+// the error:
+const error = selectErrorPayload('users')(store.getState())
 ```
 
 Assuming you are using redux together with React, you could write your connector like this:
