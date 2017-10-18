@@ -5,6 +5,7 @@ import {
   isFetching,
   isFetchSuccess,
   selectPayload,
+  selectErrorPayload,
 } from './index'
 
 import { applyMiddleware, combineReducers, createStore } from 'redux'
@@ -96,9 +97,19 @@ describe('The public api of redux-saga-fetch', () => {
         expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(
           !testCase.expectedError
         )
-        expect(selectPayload(testCase.key)(store.getState())).toEqual(
-          testCase.expectedPayload
-        )
+        if (testCase.expectedError) {
+          expect(selectErrorPayload(testCase.key)(store.getState())).toEqual(
+            testCase.expectedPayload
+          )
+          expect(selectPayload(testCase.key)(store.getState())).toBeUndefined()
+        } else {
+          expect(selectPayload(testCase.key)(store.getState())).toEqual(
+            testCase.expectedPayload
+          )
+          expect(
+            selectErrorPayload(testCase.key)(store.getState())
+          ).toBeUndefined()
+        }
       })
     })
   })

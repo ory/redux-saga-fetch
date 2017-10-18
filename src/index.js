@@ -32,6 +32,8 @@ export const isFetchSuccess = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_SUCCESS
 export const selectPayload = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'payload'], state, undefined)
+export const selectErrorPayload = (key: string) => (state: State) =>
+  pathOr(['reduxSagaFetch', key, 'errorPayload'], state, undefined)
 
 const createDefaultWorker = (fetcher, successAction, failureAction) =>
   function*(action) {
@@ -109,21 +111,29 @@ class SagaFetcher {
     Object.keys(this.registry).forEach(key => {
       handlers[createRequestAction(key).toString()] = (state, action) => ({
         ...state,
-        [key]: { status: STATE_FETCHING },
+        [key]: {
+          status: STATE_FETCHING,
+          payload: undefined,
+          errorPayload: undefined,
+        },
       })
       handlers[createRequestSuccessAction(key).toString()] = (
         state,
         { payload }
       ) => ({
         ...state,
-        [key]: { status: STATE_SUCCESS, payload },
+        [key]: { status: STATE_SUCCESS, payload, errorPayload: undefined },
       })
       handlers[createRequestFailureAction(key).toString()] = (
         state,
         { payload }
       ) => ({
         ...state,
-        [key]: { status: STATE_FAILURE, payload },
+        [key]: {
+          status: STATE_FAILURE,
+          payload: undefined,
+          errorPayload: payload,
+        },
       })
     })
 
