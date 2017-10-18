@@ -15,7 +15,8 @@ script:
   - yarn run build
 
 before_deploy:
-  - npm version -f --no-git-tag-version $(git describe --tag);
+  - npm version -f --no-git-tag-version $(git describe --tag)
+  - yarn run build
 
 deploy:
   - provider: npm
