@@ -76,12 +76,12 @@ createRequestAction('article')(1234)
 createRequestAction('createArticle')({ id: 12345, title: 'foo' })
 
 // Now, the saga watchers will execute the API calls. In the meanwhile, you can check the status of each request using
-isFetching(store.getState()('users') // if true, the API call has not finished yet.
-isFetchSuccess(store.getState()('users') // if true, the API call resultet in Promise.resolve()
-isFetchError(store.getState()('users') // if true, the API call resultet in Promise.reject()
+isFetching('users')(store.getState()) // if true, the API call has not finished yet.
+isFetchSuccess('users')(store.getState()) // if true, the API call resultet in Promise.resolve()
+isFetchError('users')(store.getState()) // if true, the API call resultet in Promise.reject()
 
 // Let's assume the API call has finished and we want to see the result. This works for both cases (error and success).
-const users = selectPayload(store.getState())('users')
+const users = selectPayload('users')(store.getState())
 ```
 
 Assuming you are using redux together with React, you could write your connector like this:
@@ -107,8 +107,8 @@ const Component = ({ getUsers, users, isFetchingUsers }) => (
 
 
 const mapStateToProps = (state) => ({
-  isFetchingUsers: isFetching(state)('users')
-  users: selectPayload(state)('users')
+  isFetchingUsers: isFetching('users')(state)
+  users: selectPayload('users')(state)
 }
 
 const mapDispatchToProps = (dispatch) => ({

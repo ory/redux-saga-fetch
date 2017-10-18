@@ -24,13 +24,13 @@ type State = {
 const pathOr = (p: any[], o: any, d: any) =>
   p.reduce((xs, x) => (xs && xs[x] ? xs[x] : d), o)
 
-export const isFetching = (state: State) => (key: string) =>
+export const isFetching = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FETCHING
-export const isFetchFailure = (state: State) => (key: string) =>
+export const isFetchFailure = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_FAILURE
-export const isFetchSuccess = (state: State) => (key: string) =>
+export const isFetchSuccess = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'status'], state, null) === STATE_SUCCESS
-export const selectPayload = (state: State) => (key: string) =>
+export const selectPayload = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'payload'], state, undefined)
 
 const createDefaultWorker = (fetcher, successAction, failureAction) =>
