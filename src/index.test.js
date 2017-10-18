@@ -84,19 +84,19 @@ describe('The public api of redux-saga-fetch', () => {
 
       it('should show that the status is fetching', async () => {
         await delay(1)
-        expect(isFetching(store.getState())(testCase.key)).toBeTruthy()
+        expect(isFetching(testCase.key)(store.getState())).toBeTruthy()
       })
 
       it('should show that the status is done', async () => {
         await delay(55)
-        expect(isFetching(store.getState())(testCase.key)).toBeFalsy()
-        expect(isFetchFailure(store.getState())(testCase.key)).toEqual(
+        expect(isFetching(testCase.key)(store.getState())).toBeFalsy()
+        expect(isFetchFailure(testCase.key)(store.getState())).toEqual(
           testCase.expectedError
         )
-        expect(isFetchSuccess(store.getState())(testCase.key)).toEqual(
+        expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(
           !testCase.expectedError
         )
-        expect(selectPayload(store.getState())(testCase.key)).toEqual(
+        expect(selectPayload(testCase.key)(store.getState())).toEqual(
           testCase.expectedPayload
         )
       })
