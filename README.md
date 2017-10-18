@@ -67,7 +67,7 @@ const store = createStore(
 )
 
 // We need to register the saga watchers of reduxSagaFetch
-sagaMiddleware.run(registry.createRootSaga())
+sagaMiddleware.run(sagaFetcher.createRootSaga())
 
 
 // Now we're done, let's dispatch some actions!
