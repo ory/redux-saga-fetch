@@ -173,21 +173,17 @@ export const createRequestAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_REQUEST`)
 
 /**
- * Creates an action that is dispatched once a request action succeeds. This is an internal method and not part
- * of the public api.
+ * Creates an action that is dispatched once a request action succeeds.
  *
- * @private
  * @param key
  */
-const createRequestSuccessAction = (key: string) =>
+export const createRequestSuccessAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_SUCCESS`)
 
 /**
- * Creates an action that is dispatched once a request action fails. This is an internal method and not part
- * of the public api.
+ * Creates an action that is dispatched once a request action fails.
  *
- * @private
  * @param key
  */
-const createRequestFailureAction = (key: string) =>
+export const createRequestFailureAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_FAILURE`)
