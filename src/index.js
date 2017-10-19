@@ -38,10 +38,10 @@ export const selectErrorPayload = (key: string) => (state: State) =>
 const createDefaultWorker = (fetcher, successAction, failureAction) =>
   function*(action) {
     try {
-      const result = yield call(fetcher, action.payload)
-      yield put(successAction(result))
+      const response = yield call(fetcher, action.payload)
+      yield put(successAction({ response, request: action.payload }))
     } catch (error) {
-      yield put(failureAction(error))
+      yield put(failureAction({ error, request: action.payload }))
     }
   }
 
@@ -122,7 +122,11 @@ class SagaFetcher {
         { payload }
       ) => ({
         ...state,
-        [key]: { status: STATE_SUCCESS, payload, errorPayload: undefined },
+        [key]: {
+          status: STATE_SUCCESS,
+          payload: payload.response,
+          errorPayload: undefined,
+        },
       })
       handlers[createRequestFailureAction(key).toString()] = (
         state,
@@ -132,7 +136,7 @@ class SagaFetcher {
         [key]: {
           status: STATE_FAILURE,
           payload: undefined,
-          errorPayload: payload,
+          errorPayload: payload.error,
         },
       })
     })
