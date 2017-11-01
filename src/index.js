@@ -34,6 +34,21 @@ export const selectPayload = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'payload'], state, undefined)
 export const selectErrorPayload = (key: string) => (state: State) =>
   pathOr(['reduxSagaFetch', key, 'errorPayload'], state, undefined)
+export const hasFetchFailures = (state: State) => {
+  const states = pathOr(['reduxSagaFetch'], state, {})
+  return Boolean(
+    Object.keys(states).find(key => states[key].status === STATE_FAILURE)
+  )
+}
+export const selectErrorPayloads = (state: State) => {
+  const states = pathOr(['reduxSagaFetch'], state, {})
+  return Object.keys(states)
+    .filter(key => states[key].status === STATE_FAILURE)
+    .map(key => ({
+      key,
+      error: states[key].errorPayload,
+    }))
+}
 
 const createDefaultWorker = (fetcher, successAction, failureAction) =>
   function*(action) {
