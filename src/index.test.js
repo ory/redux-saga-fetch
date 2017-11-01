@@ -6,6 +6,8 @@ import {
   isFetchSuccess,
   selectPayload,
   selectErrorPayload,
+  hasFetchFailures,
+  selectErrorPayloads,
 } from './index'
 
 import { applyMiddleware, combineReducers, createStore } from 'redux'
@@ -56,12 +58,6 @@ describe('The public api of redux-saga-fetch', () => {
 
   const testCases = [
     {
-      key: 'serverError',
-      actionPayload: undefined,
-      expectedPayload: internalServerError,
-      expectedError: true,
-    },
-    {
       key: 'success',
       actionPayload: 'foo',
       expectedPayload: { foo: 'bar', id: 'foo' },
@@ -72,6 +68,13 @@ describe('The public api of redux-saga-fetch', () => {
       actionPayload: undefined,
       expectedPayload: undefined,
       expectedError: false,
+    },
+    // Failures must be after successes for the hasFetchFailures tests to pass
+    {
+      key: 'serverError',
+      actionPayload: undefined,
+      expectedPayload: internalServerError,
+      expectedError: true,
     },
   ]
 
@@ -94,11 +97,17 @@ describe('The public api of redux-saga-fetch', () => {
         expect(isFetchFailure(testCase.key)(store.getState())).toEqual(
           testCase.expectedError
         )
+        expect(hasFetchFailures(store.getState())).toEqual(
+          testCase.expectedError
+        )
         expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(
           !testCase.expectedError
         )
         if (testCase.expectedError) {
           expect(selectErrorPayload(testCase.key)(store.getState())).toEqual(
+            testCase.expectedPayload
+          )
+          expect(selectErrorPayloads(store.getState())[0].error).toEqual(
             testCase.expectedPayload
           )
           expect(selectPayload(testCase.key)(store.getState())).toBeUndefined()
@@ -109,6 +118,7 @@ describe('The public api of redux-saga-fetch', () => {
           expect(
             selectErrorPayload(testCase.key)(store.getState())
           ).toBeUndefined()
+          expect(selectErrorPayloads(store.getState()).length).toEqual(0)
         }
       })
     })
