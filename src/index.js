@@ -1,23 +1,29 @@
 // @flow
 // createRegistry, createRequestAction, createRequestFailureAction, createRequestSuccessAction, createRootReducer, createRootSaga
 import { createAction, handleActions } from 'redux-actions'
-import { all, call, put, takeLatest } from 'redux-saga/effects'
+import { all, call, put, takeLatest, select, take } from 'redux-saga/effects'
 import 'babel-core/register'
 import 'babel-polyfill'
 
+type OptionsType = {
+  fetcher: () => Promise<*>,
+  takeStrategy?: Function,
+  group?: string,
+}
+
 type Registry = {
-  [key: string]: {
-    fetcher: () => Promise<*>,
-    takeStrategy: Function,
-  },
+  [key: string]: OptionsType,
+}
+
+type StateItem = {
+  status: string,
+  payload: mixed,
+  errorPayload: mixed,
 }
 
 type State = {
   reduxSagaFetch: {
-    [key: string]: {
-      status: string,
-      payload: mixed,
-    },
+    [key: string]: StateItem,
   },
 }
 
@@ -40,22 +46,50 @@ export const hasFetchFailures = (state: State) => {
     Object.keys(states).find(key => states[key].status === STATE_FAILURE)
   )
 }
-export const selectErrorPayloads = (state: State) => {
+
+// mapStates filters all the states by status and then maps with the custom map function
+const mapStates = (
+  state: State,
+  status: string,
+  mapFunc: (curr: StateItem, key?: string) => mixed
+) => {
   const states = pathOr(['reduxSagaFetch'], state, {})
   return Object.keys(states)
-    .filter(key => states[key].status === STATE_FAILURE)
-    .map(key => ({
-      key,
-      error: states[key].errorPayload,
-    }))
+    .filter(key => states[key].status === status)
+    .map((key: string) => mapFunc(states[key], key))
 }
 
-const createDefaultWorker = (fetcher, successAction, failureAction) =>
+export const selectErrorPayloads = (state: State) =>
+  mapStates(state, STATE_FAILURE, (current, key) => ({
+    key,
+    error: current.errorPayload,
+  }))
+
+const fetchingActionsInGroup = (state: State, group: string) =>
+  group
+    ? mapStates(
+        state,
+        STATE_FETCHING,
+        (current, key) => (current.group === group ? key : undefined)
+      ).filter(key => key)
+    : []
+
+const createDefaultWorker = (key: string, { fetcher, group }: OptionsType) =>
   function*(action) {
     try {
+      let blockedInGroup = yield select(fetchingActionsInGroup, group)
+
+      // wait for group to get unblocked
+      while (blockedInGroup.length > 0) {
+        yield take(blockedInGroup)
+        blockedInGroup = yield select(fetchingActionsInGroup, group)
+      }
+
+      const successAction = createRequestSuccessAction(key)
       const response = yield call(fetcher, action.payload)
       yield put(successAction({ response, request: action.payload }))
     } catch (error) {
+      const failureAction = createRequestFailureAction(key)
       yield put(failureAction({ error, request: action.payload }))
     }
   }
@@ -67,13 +101,9 @@ const createWatcher = (action, worker, takeStrategy) =>
 
 const createWatchers = (registry: Registry) =>
   Object.keys(registry).map(key => {
-    const { fetcher, takeStrategy } = registry[key]
+    const { takeStrategy = takeLatest } = registry[key]
     const action = createRequestAction(key)
-    const worker = createDefaultWorker(
-      fetcher,
-      createRequestSuccessAction(key),
-      createRequestFailureAction(key)
-    )
+    const worker = createDefaultWorker(key, registry[key])
 
     return createWatcher(action, worker, takeStrategy)()
   })
@@ -87,10 +117,7 @@ class SagaFetcher {
 
   constructor(
     config: {
-      [key: string]: {
-        fetcher: () => Promise<*>,
-        takeStrategy: any,
-      },
+      [key: string]: OptionsType,
     } = {}
   ) {
     if (typeof config !== 'object') {
@@ -99,24 +126,19 @@ class SagaFetcher {
 
     Object.keys(config).forEach(key => {
       const options = config[key]
-      this.add(key, options.fetcher, options.takeStrategy)
+      this.add(key, options)
     })
   }
 
-  add = (
-    key: string,
-    fetcher: (arg: any) => Promise<*>,
-    takeStrategy: Function = takeLatest
-  ) => {
-    if (typeof fetcher !== 'function') {
+  add = (key: string, options: OptionsType) => {
+    if (typeof options.fetcher !== 'function') {
       throw new Error(
-        `Expected a function for key ${key} but got ${typeof fetcher}`
+        `Expected a function for key ${key} but got ${typeof options.fetcher}`
       )
     }
 
     this.registry[key] = {
-      fetcher,
-      takeStrategy: takeStrategy,
+      ...options,
     }
   }
 
