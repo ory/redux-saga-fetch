@@ -126,7 +126,7 @@ describe('The public api of redux-saga-fetch', () => {
     })
   })
 
-  it('grouping of requests works', () => {
+  it('grouping of requests works', async () => {
     const group = 'group'
 
     const registry = createSagaFetcher({
@@ -155,11 +155,6 @@ describe('The public api of redux-saga-fetch', () => {
 
     sagaMiddleware.run(registry.createRootSaga())
 
-    beforeAll(() => {
-      store.dispatch(request1(''))
-      store.dispatch(request2())
-    })
-
     const expectFetching = (r1, r2) => {
       expect(isFetching('request1')(store.getState())).toBe(r1)
       expect(isFetching('request2')(store.getState())).toBe(r2)
@@ -170,15 +165,18 @@ describe('The public api of redux-saga-fetch', () => {
       expect(isFetchSuccess('request2')(store.getState())).toBe(r2)
     }
 
-    //expectFetching(true, true)
+    store.dispatch(request1())
+    store.dispatch(request2())
+
+    expectFetching(true, true)
     expectSuccess(false, false)
-    delay(51).then(() => {
-      expectFetching(false, true)
-      expectSuccess(true, false)
-    })
-    delay(10).then(() => {
-      expectFetching(false, false)
-      expectSuccess(true, true)
-    })
+
+    await delay(55)
+    expectFetching(false, true)
+    expectSuccess(true, false)
+
+    await delay(10)
+    expectFetching(false, false)
+    expectSuccess(true, true)
   })
 })

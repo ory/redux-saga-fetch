@@ -65,24 +65,45 @@ export const selectErrorPayloads = (state: State) =>
     error: current.errorPayload,
   }))
 
-const fetchingActionsInGroup = (state: State, group: string) =>
+const fetchingActionsInGroup = (
+  state: State,
+  registry: Registry,
+  group: string | undefined,
+  key: string
+) =>
   group
     ? mapStates(
         state,
         STATE_FETCHING,
-        (current, key) => (current.group === group ? key : undefined)
-      ).filter(key => key)
+        (current, key) => (registry[key].group === group ? key : undefined)
+      ).filter(k => k && k !== key)
     : []
 
-const createDefaultWorker = (key: string, { fetcher, group }: OptionsType) =>
+const getFinishedActions = (keys: string[]) =>
+  keys
+    .map(k => createRequestSuccessAction(k).toString())
+    .concat(keys.map(k => createRequestFailureAction(k).toString()))
+
+const createDefaultWorker = (key: string, registry: Registry) =>
   function*(action) {
     try {
-      let blockedInGroup = yield select(fetchingActionsInGroup, group)
+      const { group, fetcher } = registry[key]
+      let blockedInGroup = yield select(
+        fetchingActionsInGroup,
+        registry,
+        group,
+        key
+      )
 
       // wait for group to get unblocked
       while (blockedInGroup.length > 0) {
-        yield take(blockedInGroup)
-        blockedInGroup = yield select(fetchingActionsInGroup, group)
+        yield take(getFinishedActions(blockedInGroup))
+        blockedInGroup = yield select(
+          fetchingActionsInGroup,
+          registry,
+          group,
+          key
+        )
       }
 
       const successAction = createRequestSuccessAction(key)
@@ -103,7 +124,7 @@ const createWatchers = (registry: Registry) =>
   Object.keys(registry).map(key => {
     const { takeStrategy = takeLatest } = registry[key]
     const action = createRequestAction(key)
-    const worker = createDefaultWorker(key, registry[key])
+    const worker = createDefaultWorker(key, registry)
 
     return createWatcher(action, worker, takeStrategy)()
   })
