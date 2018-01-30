@@ -8,10 +8,12 @@ import {
   selectErrorPayload,
   hasFetchFailures,
   selectErrorPayloads,
+  createRequestSuccessAction,
 } from './index'
 
 import { applyMiddleware, combineReducers, createStore } from 'redux'
 import createSagaMiddleware from 'redux-saga'
+import { combineActions, handleActions } from 'redux-actions'
 
 const internalServerError = new Error('Internal server error')
 
@@ -122,5 +124,59 @@ describe('The public api of redux-saga-fetch', () => {
         }
       })
     })
+  })
+
+  it('grouping of requests works', async () => {
+    const group = 'group'
+
+    const registry = createSagaFetcher({
+      request1: {
+        fetcher: () => delay(50).then(() => Promise.resolve('')),
+        group,
+      },
+      request2: {
+        fetcher: () => delay(10).then(() => Promise.resolve('')),
+        group,
+      },
+    })
+
+    const request1 = createRequestAction('request1')
+    const request2 = createRequestAction('request2')
+
+    const rootReducer = combineReducers(registry.wrapRootReducer())
+
+    const initialState = {}
+    const sagaMiddleware = createSagaMiddleware()
+    const store = createStore(
+      rootReducer,
+      initialState,
+      applyMiddleware(sagaMiddleware)
+    )
+
+    sagaMiddleware.run(registry.createRootSaga())
+
+    const expectFetching = (r1, r2) => {
+      expect(isFetching('request1')(store.getState())).toBe(r1)
+      expect(isFetching('request2')(store.getState())).toBe(r2)
+    }
+
+    const expectSuccess = (r1, r2) => {
+      expect(isFetchSuccess('request1')(store.getState())).toBe(r1)
+      expect(isFetchSuccess('request2')(store.getState())).toBe(r2)
+    }
+
+    store.dispatch(request1())
+    store.dispatch(request2())
+
+    expectFetching(true, true)
+    expectSuccess(false, false)
+
+    await delay(55)
+    expectFetching(false, true)
+    expectSuccess(true, false)
+
+    await delay(10)
+    expectFetching(false, false)
+    expectSuccess(true, true)
   })
 })

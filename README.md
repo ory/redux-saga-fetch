@@ -42,11 +42,15 @@ const sagaFetcher = createSagaFetcher({
   },
   article: {
     // The action payload (see below) will be passed as the first argument.
-    fetcher: (id) => getUsersFromAPI(id)
+    fetcher: (id) => getUsersFromAPI(id),
+    // If any key of the group is fetching (in this case 'article' and 'createArticle') and
+    // the other one is requested, the first one has to finish first before the second one gets fetched.
+    group: 'article'
   },
   createArticle: {
     // This works with POST/PUT/DELETE/... methods as well
-    fetcher: (payload) => createArticleAtAPI(payload)
+    fetcher: (payload) => createArticleAtAPI(payload),
+    group: 'article'
   }
 })
 
