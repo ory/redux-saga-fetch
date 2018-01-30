@@ -51,7 +51,7 @@ export const hasFetchFailures = (state: State) => {
 const mapStates = (
   state: State,
   status: string,
-  mapFunc: (curr: StateItem, key?: string) => mixed
+  mapFunc: (curr: StateItem, key: string) => mixed
 ) => {
   const states = pathOr(['reduxSagaFetch'], state, {})
   return Object.keys(states)
@@ -68,14 +68,14 @@ export const selectErrorPayloads = (state: State) =>
 const fetchingActionsInGroup = (
   state: State,
   registry: Registry,
-  group: string | undefined,
+  group: ?string,
   key: string
 ) =>
   group
     ? mapStates(
         state,
         STATE_FETCHING,
-        (current, key) => (registry[key].group === group ? key : undefined)
+        (current, key: string) => (registry[key].group === group ? key : undefined)
       ).filter(k => k && k !== key)
     : []
 
