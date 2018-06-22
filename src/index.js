@@ -9,6 +9,7 @@ type OptionsType = {
   fetcher: () => Promise<*>,
   takeStrategy?: Function,
   group?: string,
+  selector?: (State) => any
 }
 
 type Registry = {
@@ -75,7 +76,8 @@ const fetchingActionsInGroup = (
     ? mapStates(
         state,
         STATE_FETCHING,
-        (current, key: string) => (registry[key].group === group ? key : undefined)
+        (current, key: string) =>
+          registry[key].group === group ? key : undefined
       ).filter(k => k && k !== key)
     : []
 
@@ -87,7 +89,7 @@ const getFinishedActions = (keys: string[]) =>
 const createDefaultWorker = (key: string, registry: Registry) =>
   function*(action) {
     try {
-      const { group, fetcher } = registry[key]
+      const { group, fetcher, selector = () => undefined } = registry[key]
       let blockedInGroup = yield select(
         fetchingActionsInGroup,
         registry,
@@ -106,8 +108,9 @@ const createDefaultWorker = (key: string, registry: Registry) =>
         )
       }
 
+      const requestedState = yield select(selector)
       const successAction = createRequestSuccessAction(key)
-      const response = yield call(fetcher, action.payload)
+      const response = yield call(fetcher, action.payload, requestedState)
       yield put(successAction({ response, request: action.payload }))
     } catch (error) {
       const failureAction = createRequestFailureAction(key)
