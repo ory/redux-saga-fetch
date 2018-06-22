@@ -51,7 +51,12 @@ const sagaFetcher = createSagaFetcher({
     // This works with POST/PUT/DELETE/... methods as well
     fetcher: (payload) => createArticleAtAPI(payload),
     group: 'article'
-  }
+  },
+  contactEditor: {
+    // supposed this fetcher needs to get the email address of the editor out of the store
+    fetcher: (text, address) => writeEmail({ to: address, subject: 'send over redux-saga-fetch', text }),
+    // selector is a regular redux selector taking the state and returning a partial state of choice
+    selector: (state) => state.contacts.editor.emailAddress
 })
 
 // We need to wrap the root reducer in order to get sagaFetcher to work.

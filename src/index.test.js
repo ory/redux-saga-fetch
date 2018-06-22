@@ -44,11 +44,18 @@ describe('The public api of redux-saga-fetch', () => {
     },
     success: { fetcher: id => delay(50).then(() => ({ foo: 'bar', id })) },
     successWithoutContent: { fetcher: () => delay(50) },
+    expectsState: {
+      fetcher: (payload, testValue) =>
+        delay(50).then(() => Promise.resolve(testValue)),
+      selector: state => state.testKey,
+    },
   })
 
-  const rootReducer = combineReducers(registry.wrapRootReducer({}))
+  const initialState = { testKey: 'testValue' }
+  const rootReducer = combineReducers(
+    registry.wrapRootReducer({ testKey: () => initialState.testKey })
+  )
 
-  const initialState = {}
   const sagaMiddleware = createSagaMiddleware()
   const store = createStore(
     rootReducer,
@@ -71,6 +78,12 @@ describe('The public api of redux-saga-fetch', () => {
       expectedPayload: undefined,
       expectedError: false,
     },
+    {
+      key: 'expectsState',
+      actionPayload: undefined,
+      expectedPayload: initialState.testKey,
+      expectedError: false,
+    },
     // Failures must be after successes for the hasFetchFailures tests to pass
     {
       key: 'serverError',
@@ -81,6 +94,7 @@ describe('The public api of redux-saga-fetch', () => {
   ]
 
   testCases.forEach((testCase, testIndex) => {
+    console.log(store.getState())
     describe(`performing test case ${testIndex}`, () => {
       beforeAll(() => {
         store.dispatch(
