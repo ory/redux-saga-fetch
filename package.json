@@ -1,6 +1,6 @@
 {
   "name": "ory-redux-saga-fetch",
-  "version": "latest",
+  "version": "0",
   "description": "A helper for fetching states from remote APIs that wraps redux-saga",
   "main": "lib/index.js",
   "repository": "https://github.com/ory/redux-saga-fetch.git",

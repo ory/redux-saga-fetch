@@ -2,8 +2,6 @@
 // createRegistry, createRequestAction, createRequestFailureAction, createRequestSuccessAction, createRootReducer, createRootSaga
 import { createAction, handleActions } from 'redux-actions'
 import { all, call, put, takeLatest, select, take } from 'redux-saga/effects'
-import 'babel-core/register'
-import 'babel-polyfill'
 
 type OptionsType = {
   fetcher: () => Promise<*>,
