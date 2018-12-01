@@ -1,7 +1,15 @@
 {
-  "presets": ["env", "flow"],
+  "presets": [
+    "@babel/env",
+    "@babel/preset-typescript"
+  ],
   "plugins": [
-    "transform-class-properties",
-    "transform-object-rest-spread"
+    "@babel/plugin-proposal-class-properties",
+    "@babel/plugin-proposal-object-rest-spread",
+    "@babel/plugin-transform-regenerator"
+  ],
+  "ignore": [
+    "**/*.test.js",
+    "**/*.test.ts"
   ]
 }

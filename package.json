@@ -1,39 +1,47 @@
 {
   "name": "ory-redux-saga-fetch",
-  "version": "0",
+  "version": "v0.0.0",
   "description": "A helper for fetching states from remote APIs that wraps redux-saga",
   "main": "lib/index.js",
+  "types": "./lib/main.d.ts",
   "repository": "https://github.com/ory/redux-saga-fetch.git",
   "author": "aeneasr <aeneas.rekkas@serlo.org>",
   "license": "MIT",
   "private": false,
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-flow": "^6.23.0",
-    "coveralls": "^3.0.0",
-    "flow-bin": "^0.57.2",
-    "flow-typed": "^2.2.0",
-    "jest": "^21.2.1",
-    "prettier": "^1.7.4",
-    "babel-core": "^6.26.0"
+    "@babel/cli": "^7.1.5",
+    "@babel/core": "^7.1.6",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/plugin-transform-regenerator": "^7.0.0",
+    "@babel/preset-env": "^7.1.6",
+    "@babel/preset-flow": "^7.0.0",
+    "@babel/preset-typescript": "^7.1.0",
+    "@types/jest": "^23.3.10",
+    "@types/ramda": "^0.25.42",
+    "@types/redux-actions": "^2.3.1",
+    "coveralls": "^3.0.2",
+    "jest": "^23.6.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^1.15.3",
+    "redux": "^4.0.1",
+    "ts-jest": "^23.10.5",
+    "typescript": "^3.2.1"
   },
   "scripts": {
-    "build": "babel src/ --out-dir lib/ --ignore *.test.js",
-    "watch": "babel -w src/ --out-dir lib/ --ignore *.test.js",
+    "build": "npm-run-all build:*",
+    "build:js": "babel src/ --out-dir lib/ --extensions .ts",
+    "watch": "babel -w src/ --out-dir lib/ --extensions .ts",
     "test": "jest",
+    "build:types": "tsc --emitDeclarationOnly",
     "test:coveralls": "jest --coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test:watch": "jest --watch",
-    "flow:generate": "flow-typed install",
-    "flow": "flow",
-    "format": "prettier --trailing-comma es5 --no-semi --single-quote --write src/*.js"
+    "format": "prettier --trailing-comma es5 --no-semi --single-quote --write src/*.js",
+    "dts": "dts-gen -m ory-redux-saga-fetch"
   },
   "dependencies": {
-    "redux": "^3.7.2",
-    "redux-actions": "^2.2.1",
-    "redux-saga": "^0.16.0"
+    "ramda": "^0.26.1",
+    "redux-actions": "^2.6.4",
+    "redux-saga": "^0.16.2"
   }
 }

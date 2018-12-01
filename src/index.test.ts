@@ -7,33 +7,30 @@ import {
   selectPayload,
   selectErrorPayload,
   hasFetchFailures,
-  selectErrorPayloads,
-  createRequestSuccessAction,
+  selectErrorPayloads, State,
 } from './index'
-
-import { applyMiddleware, combineReducers, createStore } from 'redux'
+import {applyMiddleware, combineReducers, createStore} from 'redux'
 import createSagaMiddleware from 'redux-saga'
-import { combineActions, handleActions } from 'redux-actions'
 
 const internalServerError = new Error('Internal server error')
 
-const delay = time => new Promise(resolve => setTimeout(resolve, time))
+const delay = (time: number) => new Promise((resolve: any) => setTimeout(resolve, time))
 
 describe('createRegistry', () => {
   it('should throw an error when an invalid registry is given', () => {
     expect(() =>
-      createSagaFetcher({
+      createSagaFetcher(<any>{
         foo: 'bar',
       })
     ).toThrow()
   })
 
   it('should throw an error when the registry is not an object but a string', () => {
-    expect(() => createSagaFetcher('foo')).toThrow()
+    expect(() => createSagaFetcher(<any>'foo')).toThrow()
   })
 
   it('should throw an error when the registry is not an object but an array', () => {
-    expect(() => createSagaFetcher(['foo'])).toThrow()
+    expect(() => createSagaFetcher(<any>['foo'])).toThrow()
   })
 })
 
@@ -42,18 +39,18 @@ describe('The public api of redux-saga-fetch', () => {
     serverError: {
       fetcher: id => delay(50).then(() => Promise.reject(internalServerError)),
     },
-    success: { fetcher: id => delay(50).then(() => ({ foo: 'bar', id })) },
-    successWithoutContent: { fetcher: () => delay(50) },
+    success: {fetcher: id => delay(50).then(() => ({foo: 'bar', id}))},
+    successWithoutContent: {fetcher: () => delay(50)},
     expectsState: {
       fetcher: (payload, testValue) =>
         delay(50).then(() => Promise.resolve(testValue)),
-      selector: state => state.testKey,
+      selector: (state: any) => state.testKey,
     },
   })
 
-  const initialState = { testKey: 'testValue' }
+  const initialState = {testKey: 'testValue'}
   const rootReducer = combineReducers(
-    registry.wrapRootReducer({ testKey: () => initialState.testKey })
+    registry.wrapRootReducer({testKey: () => initialState.testKey})
   )
 
   const sagaMiddleware = createSagaMiddleware()
@@ -69,7 +66,7 @@ describe('The public api of redux-saga-fetch', () => {
     {
       key: 'success',
       actionPayload: 'foo',
-      expectedPayload: { foo: 'bar', id: 'foo' },
+      expectedPayload: {foo: 'bar', id: 'foo'},
       expectedError: false,
     },
     {
@@ -94,7 +91,7 @@ describe('The public api of redux-saga-fetch', () => {
   ]
 
   testCases.forEach((testCase, testIndex) => {
-    console.log(store.getState())
+    console.log(<State>store.getState())
     describe(`performing test case ${testIndex}`, () => {
       beforeAll(() => {
         store.dispatch(
@@ -104,37 +101,37 @@ describe('The public api of redux-saga-fetch', () => {
 
       it('should show that the status is fetching', async () => {
         await delay(1)
-        expect(isFetching(testCase.key)(store.getState())).toBeTruthy()
+        expect(isFetching(testCase.key)(<State>store.getState())).toBeTruthy()
       })
 
       it('should show that the status is done', async () => {
         await delay(55)
-        expect(isFetching(testCase.key)(store.getState())).toBeFalsy()
-        expect(isFetchFailure(testCase.key)(store.getState())).toEqual(
+        expect(isFetching(testCase.key)(<State>store.getState())).toBeFalsy()
+        expect(isFetchFailure(testCase.key)(<State>store.getState())).toEqual(
           testCase.expectedError
         )
-        expect(hasFetchFailures(store.getState())).toEqual(
+        expect(hasFetchFailures(<State>store.getState())).toEqual(
           testCase.expectedError
         )
-        expect(isFetchSuccess(testCase.key)(store.getState())).toEqual(
+        expect(isFetchSuccess(testCase.key)(<State>store.getState())).toEqual(
           !testCase.expectedError
         )
         if (testCase.expectedError) {
-          expect(selectErrorPayload(testCase.key)(store.getState())).toEqual(
+          expect(selectErrorPayload(testCase.key)(<State>store.getState())).toEqual(
             testCase.expectedPayload
           )
-          expect(selectErrorPayloads(store.getState())[0].error).toEqual(
+          expect(selectErrorPayloads(<State>store.getState())[0].error).toEqual(
             testCase.expectedPayload
           )
-          expect(selectPayload(testCase.key)(store.getState())).toBeUndefined()
+          expect(selectPayload(testCase.key)(<State>store.getState())).toBeUndefined()
         } else {
-          expect(selectPayload(testCase.key)(store.getState())).toEqual(
+          expect(selectPayload(testCase.key)(<State>store.getState())).toEqual(
             testCase.expectedPayload
           )
           expect(
-            selectErrorPayload(testCase.key)(store.getState())
+            selectErrorPayload(testCase.key)(<State>store.getState())
           ).toBeUndefined()
-          expect(selectErrorPayloads(store.getState()).length).toEqual(0)
+          expect(selectErrorPayloads(<State>store.getState()).length).toEqual(0)
         }
       })
     })
@@ -169,14 +166,14 @@ describe('The public api of redux-saga-fetch', () => {
 
     sagaMiddleware.run(registry.createRootSaga())
 
-    const expectFetching = (r1, r2) => {
-      expect(isFetching('request1')(store.getState())).toBe(r1)
-      expect(isFetching('request2')(store.getState())).toBe(r2)
+    const expectFetching = (r1: any, r2: any) => {
+      expect(isFetching('request1')(<State>store.getState())).toBe(r1)
+      expect(isFetching('request2')(<State>store.getState())).toBe(r2)
     }
 
-    const expectSuccess = (r1, r2) => {
-      expect(isFetchSuccess('request1')(store.getState())).toBe(r1)
-      expect(isFetchSuccess('request2')(store.getState())).toBe(r2)
+    const expectSuccess = (r1: any, r2: any) => {
+      expect(isFetchSuccess('request1')(<State>store.getState())).toBe(r1)
+      expect(isFetchSuccess('request2')(<State>store.getState())).toBe(r2)
     }
 
     store.dispatch(request1())
