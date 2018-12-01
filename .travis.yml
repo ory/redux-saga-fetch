@@ -10,7 +10,6 @@ install:
   - yarn install
 
 script:
-  - yarn run flow
   - yarn run test:coveralls
   - yarn run build
 
