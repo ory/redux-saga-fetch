@@ -3,7 +3,7 @@
   "version": "v0.0.0",
   "description": "A helper for fetching states from remote APIs that wraps redux-saga",
   "main": "lib/index.js",
-  "types": "./lib/main.d.ts",
+  "types": "./lib/index.d.ts",
   "repository": "https://github.com/ory/redux-saga-fetch.git",
   "author": "aeneasr <aeneas.rekkas@serlo.org>",
   "license": "MIT",
