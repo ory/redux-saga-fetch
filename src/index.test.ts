@@ -7,14 +7,16 @@ import {
   selectPayload,
   selectErrorPayload,
   hasFetchFailures,
-  selectErrorPayloads, State,
+  selectErrorPayloads,
+  State,
 } from './index'
-import {applyMiddleware, combineReducers, createStore} from 'redux'
+import { applyMiddleware, combineReducers, createStore } from 'redux'
 import createSagaMiddleware from 'redux-saga'
 
 const internalServerError = new Error('Internal server error')
 
-const delay = (time: number) => new Promise((resolve: any) => setTimeout(resolve, time))
+const delay = (time: number) =>
+  new Promise((resolve: any) => setTimeout(resolve, time))
 
 describe('createRegistry', () => {
   it('should throw an error when an invalid registry is given', () => {
@@ -39,8 +41,8 @@ describe('The public api of redux-saga-fetch', () => {
     serverError: {
       fetcher: id => delay(50).then(() => Promise.reject(internalServerError)),
     },
-    success: {fetcher: id => delay(50).then(() => ({foo: 'bar', id}))},
-    successWithoutContent: {fetcher: () => delay(50)},
+    success: { fetcher: id => delay(50).then(() => ({ foo: 'bar', id })) },
+    successWithoutContent: { fetcher: () => delay(50) },
     expectsState: {
       fetcher: (payload, testValue) =>
         delay(50).then(() => Promise.resolve(testValue)),
@@ -48,9 +50,9 @@ describe('The public api of redux-saga-fetch', () => {
     },
   })
 
-  const initialState = {testKey: 'testValue'}
+  const initialState = { testKey: 'testValue' }
   const rootReducer = combineReducers(
-    registry.wrapRootReducer({testKey: () => initialState.testKey})
+    registry.wrapRootReducer({ testKey: () => initialState.testKey })
   )
 
   const sagaMiddleware = createSagaMiddleware()
@@ -66,7 +68,7 @@ describe('The public api of redux-saga-fetch', () => {
     {
       key: 'success',
       actionPayload: 'foo',
-      expectedPayload: {foo: 'bar', id: 'foo'},
+      expectedPayload: { foo: 'bar', id: 'foo' },
       expectedError: false,
     },
     {
@@ -117,13 +119,15 @@ describe('The public api of redux-saga-fetch', () => {
           !testCase.expectedError
         )
         if (testCase.expectedError) {
-          expect(selectErrorPayload(testCase.key)(<State>store.getState())).toEqual(
-            testCase.expectedPayload
-          )
+          expect(
+            selectErrorPayload(testCase.key)(<State>store.getState())
+          ).toEqual(testCase.expectedPayload)
           expect(selectErrorPayloads(<State>store.getState())[0].error).toEqual(
             testCase.expectedPayload
           )
-          expect(selectPayload(testCase.key)(<State>store.getState())).toBeUndefined()
+          expect(
+            selectPayload(testCase.key)(<State>store.getState())
+          ).toBeUndefined()
         } else {
           expect(selectPayload(testCase.key)(<State>store.getState())).toEqual(
             testCase.expectedPayload

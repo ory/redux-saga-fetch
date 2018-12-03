@@ -1,28 +1,33 @@
-import {createAction, handleActions, ReducerMap, ReducerMapValue} from 'redux-actions'
-import {all, call, put, takeLatest, select, take} from 'redux-saga/effects'
-import {pathOr} from 'ramda'
-import {Action} from 'redux-actions'
+import {
+  createAction,
+  handleActions,
+  ReducerMap,
+  ReducerMapValue,
+} from 'redux-actions'
+import { all, call, put, takeLatest, select, take } from 'redux-saga/effects'
+import { pathOr } from 'ramda'
+import { Action } from 'redux-actions'
 
 type OptionsType = {
-  fetcher: (...args: any[]) => Promise<any>,
-  takeStrategy?: Function,
-  group?: string,
+  fetcher: (...args: any[]) => Promise<any>
+  takeStrategy?: Function
+  group?: string
   selector?: (state: State) => any
 }
 
 type Registry = {
-  [key: string]: OptionsType,
+  [key: string]: OptionsType
 }
 
 type StateItem = {
-  status: string,
-  payload: any,
-  errorPayload: Error,
+  status: string
+  payload: any
+  errorPayload: Error
 }
 
 export interface State {
   reduxSagaFetch: {
-    [key: string]: StateItem,
+    [key: string]: StateItem
   }
 }
 
@@ -60,13 +65,14 @@ const mapStates = <T>(
     .map((key: string) => mapFunc(states[key], key))
 }
 
-export const selectErrorPayloads = (state: State) => mapStates<{
-  key: string,
-  error: Error
-}>(state, STATE_FAILURE, (current: StateItem, key: string) => ({
-  key,
-  error: current.errorPayload,
-}))
+export const selectErrorPayloads = (state: State) =>
+  mapStates<{
+    key: string
+    error: Error
+  }>(state, STATE_FAILURE, (current: StateItem, key: string) => ({
+    key,
+    error: current.errorPayload,
+  }))
 
 const fetchingActionsInGroup = (
   state: State,
@@ -75,12 +81,9 @@ const fetchingActionsInGroup = (
   key: string
 ) =>
   group
-    ? mapStates(
-    state,
-    STATE_FETCHING,
-    (current, key: string) =>
-      registry[key].group === group ? key : undefined
-    ).filter(k => k && k !== key)
+    ? mapStates(state, STATE_FETCHING, (current, key: string) =>
+        registry[key].group === group ? key : undefined
+      ).filter(k => k && k !== key)
     : []
 
 const getFinishedActions = (keys: string[]) =>
@@ -88,46 +91,47 @@ const getFinishedActions = (keys: string[]) =>
     .map(k => createRequestSuccessAction(k).toString())
     .concat(keys.map(k => createRequestFailureAction(k).toString()))
 
-const createDefaultWorker = (key: string, registry: Registry) => function* (action: Action<any>) {
-  try {
-    const {group, fetcher, selector = () => undefined} = registry[key]
-    let blockedInGroup = yield select(
-      fetchingActionsInGroup,
-      registry,
-      group,
-      key
-    )
-
-    // wait for group to get unblocked
-    while (blockedInGroup.length > 0) {
-      yield take(getFinishedActions(blockedInGroup))
-      blockedInGroup = yield select(
+const createDefaultWorker = (key: string, registry: Registry) =>
+  function*(action: Action<any>) {
+    try {
+      const { group, fetcher, selector = () => undefined } = registry[key]
+      let blockedInGroup = yield select(
         fetchingActionsInGroup,
         registry,
         group,
         key
       )
-    }
 
-    const requestedState = yield select(selector)
-    const successAction = createRequestSuccessAction(key)
-    const response = yield call(fetcher, action.payload, requestedState)
-    yield put(successAction({response, request: action.payload}))
-  } catch (error) {
-    const failureAction = createRequestFailureAction(key)
-    yield put(failureAction({error, request: action.payload}))
+      // wait for group to get unblocked
+      while (blockedInGroup.length > 0) {
+        yield take(getFinishedActions(blockedInGroup))
+        blockedInGroup = yield select(
+          fetchingActionsInGroup,
+          registry,
+          group,
+          key
+        )
+      }
+
+      const requestedState = yield select(selector)
+      const successAction = createRequestSuccessAction(key)
+      const response = yield call(fetcher, action.payload, requestedState)
+      yield put(successAction({ response, request: action.payload }))
+    } catch (error) {
+      const failureAction = createRequestFailureAction(key)
+      yield put(failureAction({ error, request: action.payload }))
+    }
   }
-}
 
 const createWatchers = (registry: Registry) =>
   Object.keys(registry).map(key => {
-    const {takeStrategy = takeLatest} = registry[key]
+    const { takeStrategy = takeLatest } = registry[key]
     const action = createRequestAction(key)
     const worker = createDefaultWorker(key, registry)
 
-    return function* (action, worker, takeStrategy) {
+    return (function*(action, worker, takeStrategy) {
       yield takeStrategy(action, worker)
-    }(action, worker, takeStrategy)
+    })(action, worker, takeStrategy)
   })
 
 const STATE_FETCHING = 'FETCHING'
@@ -139,7 +143,7 @@ interface Payload {
   error?: Error
 }
 
-class SagaFetcher {
+export class SagaFetcher {
   private registry: Registry = {}
 
   constructor(config: Registry = {}) {
@@ -178,44 +182,42 @@ class SagaFetcher {
         },
       })
 
-      handlers[createRequestSuccessAction(key).toString()] = <ReducerMapValue<State, Payload>>function (
-        state: State,
-        action: Action<Payload>
-      ) {
-        return ({
+      handlers[createRequestSuccessAction(key).toString()] = <
+        ReducerMapValue<State, Payload>
+      >function(state: State, action: Action<Payload>) {
+        return {
           ...state,
           [key]: {
             status: STATE_SUCCESS,
             payload: action.payload ? action.payload.response : undefined,
             errorPayload: undefined,
           },
-        })
+        }
       }
 
-      handlers[createRequestFailureAction(key).toString()] = function (
+      handlers[createRequestFailureAction(key).toString()] = function(
         state: State,
         action: Action<Payload>
       ) {
-        return ({
+        return {
           ...state,
           [key]: {
             status: STATE_FAILURE,
             payload: undefined,
             errorPayload: action.payload ? action.payload.error : undefined,
           },
-        })
+        }
       }
-
     })
 
     return {
       ...reducers,
-      reduxSagaFetch: handleActions(handlers, {reduxSagaFetch: {}}),
+      reduxSagaFetch: handleActions(handlers, { reduxSagaFetch: {} }),
     }
   }
 
   createRootSaga = () => {
-    const {registry} = this
+    const { registry } = this
     return function* rootSaga() {
       yield all(createWatchers(registry))
     }

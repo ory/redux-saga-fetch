@@ -36,7 +36,7 @@
     "build:types": "tsc --emitDeclarationOnly",
     "test:coveralls": "jest --coverage && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js",
     "test:watch": "jest --watch",
-    "format": "prettier --trailing-comma es5 --no-semi --single-quote --write src/*.js",
+    "format": "prettier --trailing-comma es5 --no-semi --single-quote --write src/*.ts",
     "dts": "dts-gen -m ory-redux-saga-fetch"
   },
   "dependencies": {
