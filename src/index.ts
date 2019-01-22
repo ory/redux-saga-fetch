@@ -134,9 +134,9 @@ const createWatchers = (registry: Registry) =>
     })(action, worker, takeStrategy)
   })
 
-const STATE_FETCHING = 'FETCHING'
-const STATE_SUCCESS = 'SUCCESS'
-const STATE_FAILURE = 'FAILURE'
+export const STATE_FETCHING = 'FETCHING'
+export const STATE_SUCCESS = 'SUCCESS'
+export const STATE_FAILURE = 'FAILURE'
 
 interface Payload {
   response?: any
