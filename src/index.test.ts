@@ -9,8 +9,9 @@ import {
   hasFetchFailures,
   selectErrorPayloads,
   State,
+  StateItem,
 } from './index'
-import { applyMiddleware, combineReducers, createStore } from 'redux'
+import { AnyAction, applyMiddleware, combineReducers, createStore } from 'redux'
 import createSagaMiddleware from 'redux-saga'
 
 const internalServerError = new Error('Internal server error')
@@ -37,7 +38,12 @@ describe('createRegistry', () => {
 })
 
 describe('The public api of redux-saga-fetch', () => {
-  const registry = createSagaFetcher({
+  const initialState: {
+    testKey: string
+    reduxSagaFetch: { [key: string]: StateItem }
+  } = { testKey: 'testValue', reduxSagaFetch: {} }
+
+  const registry = createSagaFetcher<typeof initialState>({
     serverError: {
       fetcher: id => delay(50).then(() => Promise.reject(internalServerError)),
     },
@@ -49,18 +55,17 @@ describe('The public api of redux-saga-fetch', () => {
       selector: (state: any) => state.testKey,
     },
   })
-
-  const initialState = { testKey: 'testValue' }
   const rootReducer = combineReducers(
     registry.wrapRootReducer({ testKey: () => initialState.testKey })
   )
 
   const sagaMiddleware = createSagaMiddleware()
-  const store = createStore(
-    rootReducer,
-    initialState,
-    applyMiddleware(sagaMiddleware)
-  )
+  const store = createStore<
+    { testKey: string; reduxSagaFetch: { [key: string]: StateItem } },
+    AnyAction,
+    {},
+    {}
+  >(rootReducer, initialState, applyMiddleware(sagaMiddleware))
 
   sagaMiddleware.run(registry.createRootSaga())
 
