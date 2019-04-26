@@ -1,8 +1,8 @@
 import {
-  createAction,
   handleActions,
   ReducerMap,
   ReducerMapValue,
+  createAction,
 } from 'redux-actions'
 import { all, call, put, takeLatest, select, take } from 'redux-saga/effects'
 import { pathOr } from 'ramda'
