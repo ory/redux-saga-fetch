@@ -1,25 +1,26 @@
 import {
-  createAction,
   handleActions,
   ReducerMap,
   ReducerMapValue,
+  createAction,
 } from 'redux-actions'
 import { all, call, put, takeLatest, select, take } from 'redux-saga/effects'
 import { pathOr } from 'ramda'
 import { Action } from 'redux-actions'
+import { ReducersMapObject } from 'redux'
 
-type OptionsType = {
+type OptionsType<S extends State> = {
   fetcher: (...args: any[]) => Promise<any>
   takeStrategy?: Function
   group?: string
-  selector?: (state: State) => any
+  selector?: (state: S) => any
 }
 
-type Registry = {
-  [key: string]: OptionsType
+type Registry<S extends State> = {
+  [key: string]: OptionsType<S>
 }
 
-type StateItem = {
+export type StateItem = {
   status: string
   payload: any
   errorPayload: Error
@@ -65,7 +66,7 @@ const mapStates = <T>(
     .map((key: string) => mapFunc(states[key], key))
 }
 
-export const selectErrorPayloads = (state: State) =>
+export const selectErrorPayloads = <S extends State>(state: S) =>
   mapStates<{
     key: string
     error: Error
@@ -74,9 +75,9 @@ export const selectErrorPayloads = (state: State) =>
     error: current.errorPayload,
   }))
 
-const fetchingActionsInGroup = (
-  state: State,
-  registry: Registry,
+const fetchingActionsInGroup = <S extends State>(
+  state: S,
+  registry: Registry<S>,
   group: string | undefined,
   key: string
 ) =>
@@ -91,29 +92,32 @@ const getFinishedActions = (keys: string[]) =>
     .map(k => createRequestSuccessAction(k).toString())
     .concat(keys.map(k => createRequestFailureAction(k).toString()))
 
-const createDefaultWorker = (key: string, registry: Registry) =>
+const createDefaultWorker = <S extends State>(
+  key: string,
+  registry: Registry<S>
+) =>
   function*(action: Action<any>) {
     try {
       const { group, fetcher, selector = () => undefined } = registry[key]
-      let blockedInGroup = yield select(
-        fetchingActionsInGroup,
-        registry,
-        group,
-        key
-      )
+      let blockedInGroup = yield select<
+        S,
+        Registry<S>,
+        string | undefined,
+        string
+      >(fetchingActionsInGroup, registry, group, key)
 
       // wait for group to get unblocked
       while (blockedInGroup.length > 0) {
         yield take(getFinishedActions(blockedInGroup))
-        blockedInGroup = yield select(
-          fetchingActionsInGroup,
-          registry,
-          group,
-          key
-        )
+        blockedInGroup = yield select<
+          S,
+          Registry<S>,
+          string | undefined,
+          string
+        >(fetchingActionsInGroup, registry, group, key)
       }
 
-      const requestedState = yield select(selector)
+      const requestedState = yield select<S>(selector)
       const successAction = createRequestSuccessAction(key)
       const response = yield call(fetcher, action.payload, requestedState)
       yield put(successAction({ response, request: action.payload }))
@@ -123,7 +127,7 @@ const createDefaultWorker = (key: string, registry: Registry) =>
     }
   }
 
-const createWatchers = (registry: Registry) =>
+const createWatchers = <S extends State>(registry: Registry<S>) =>
   Object.keys(registry).map(key => {
     const { takeStrategy = takeLatest } = registry[key]
     const action = createRequestAction(key)
@@ -143,10 +147,10 @@ interface Payload {
   error?: Error
 }
 
-export class SagaFetcher {
-  private registry: Registry = {}
+export class SagaFetcher<S extends State> {
+  private registry: Registry<S> = {}
 
-  constructor(config: Registry = {}) {
+  constructor(config: Registry<S> = {}) {
     if (typeof config !== 'object') {
       throw new Error(`Registry must be an object but got ${typeof config}`)
     }
@@ -157,7 +161,7 @@ export class SagaFetcher {
     })
   }
 
-  add = (key: string, options: OptionsType) => {
+  add = (key: string, options: OptionsType<S>) => {
     if (typeof options.fetcher !== 'function') {
       throw new Error(
         `Expected a function for key ${key} but got ${typeof options.fetcher}`
@@ -169,7 +173,9 @@ export class SagaFetcher {
     }
   }
 
-  wrapRootReducer = (reducers: any = {}) => {
+  wrapRootReducer = <R extends object>(
+    reducers?: ReducersMapObject<R>
+  ): ReducersMapObject<R & State> => {
     const handlers: ReducerMap<State, Payload> = {}
 
     Object.keys(this.registry).forEach(key => {
@@ -211,9 +217,11 @@ export class SagaFetcher {
     })
 
     return {
-      ...reducers,
-      reduxSagaFetch: handleActions(handlers, { reduxSagaFetch: {} }),
-    }
+      ...(reducers || ({} as ReducersMapObject<R>)),
+      reduxSagaFetch: handleActions<State, any>(handlers, {
+        reduxSagaFetch: {},
+      }),
+    } as ReducersMapObject<R & State>
   }
 
   createRootSaga = () => {
@@ -235,14 +243,15 @@ export class SagaFetcher {
  *
  * @param config
  */
-export const createSagaFetcher = (config: Registry) => new SagaFetcher(config)
+export const createSagaFetcher = <S extends State>(config: Registry<S>) =>
+  new SagaFetcher<S>(config)
 
 /**
  * Create a request action creator for redux.
  *
  * @param key
  */
-export const createRequestAction = <S>(key: string) =>
+export const createRequestAction = (key: string) =>
   createAction(`REDUX_SAGA_FETCH_${key.toUpperCase()}_REQUEST`)
 
 /**
